@@ -1,8 +1,7 @@
 import "./App.css";
 import { useEffect, useState } from "react";
-import Element from "./components/Element";
-import video from "./assets/BgVideo.mp4";
-import Obstacle from "./components/Obstacle";
+// import Element from "./components/Element";
+// import Obstacle from "./components/Obstacle";
 import FlappyBird from "./components/FlappyBird";
 
 function App() {
