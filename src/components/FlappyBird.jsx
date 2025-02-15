@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
+import ImgElement from '../assets/NaveEspacial.png';
 
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 500;
-const BIRD_SIZE = 20;
+const BIRD_SIZE = 40;
 const GRAVITY = 0.6;
 const JUMP = -7;
 const PIPE_WIDTH = 50;
@@ -14,8 +15,22 @@ const FlappyBird = () => {
   const [velocity, setVelocity] = useState(0);
   const [pipes, setPipes] = useState([{ x: CANVAS_WIDTH, height: 200 }]);
   const [score, setScore] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const canvasRef = useRef(null);
+  const birdImageRef = useRef(new Image());
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = ImgElement;
+    
+    img.onload = () => {
+      birdImageRef.current = img;
+      setImageLoaded(true);
+    };
+  
+    img.onerror = () => console.error("Failed to load bird image");
+  }, []);
 
   useEffect(() => {
     const ctx = canvasRef.current.getContext("2d");
@@ -37,13 +52,17 @@ const FlappyBird = () => {
       });
 
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      ctx.fillStyle = "skyblue";
+      ctx.fillStyle = "black";
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       
-      ctx.fillStyle = "yellow";
-      ctx.fillRect(50, birdY, BIRD_SIZE, BIRD_SIZE);
+      if (imageLoaded) {
+        ctx.drawImage(birdImageRef.current, 50, birdY, BIRD_SIZE, BIRD_SIZE);
+      } else {
+        ctx.fillStyle = "red";
+        ctx.fillRect(50, birdY, BIRD_SIZE, BIRD_SIZE);
+      }
       
-      ctx.fillStyle = "green";
+      ctx.fillStyle = "red";
       pipes.forEach((pipe) => {
         ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.height);
         ctx.fillRect(pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT);
@@ -57,9 +76,9 @@ const FlappyBird = () => {
         }
       });
 
-      ctx.fillStyle = "black";
+      ctx.fillStyle = "white";
       ctx.font = "20px Arial";
-      ctx.fillText(`Score: ${score}`, 10, 20);
+      ctx.fillText(`Puntaje: ${score}`, 10, 20);
     }, 30);
 
     return () => clearInterval(gameLoop);
@@ -77,9 +96,9 @@ const FlappyBird = () => {
   };
 
   return (
-    <div onClick={handleJump} style={{ textAlign: "center", marginTop: 20 }}>
+    <div onClick={handleJump} style={{ textAlign: "center", marginTop: 60 }}>
       <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} style={{ border: "1px solid black" }} />
-      {gameOver && <h2>Game Over! Click to restart</h2>}
+      {gameOver && <h2>Perdiste! Hacer Click para empezar.</h2>}
     </div>
   );
 };
