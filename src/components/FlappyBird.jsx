@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import ImgElement from '../assets/NaveEspacial.png';
+import ImgElement from "../assets/gotaElement.mp4";
+import BgVideo from "../assets/OceanoVideo.mp4";
 
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 500;
@@ -18,18 +19,39 @@ const FlappyBird = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const canvasRef = useRef(null);
-  const birdImageRef = useRef(new Image());
+  const videoRef = useRef(null);
+  const bgRef = useRef(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [bgVideo, setBgVideo] = useState(false);
 
   useEffect(() => {
-    const img = new Image();
-    img.src = ImgElement;
-    
-    img.onload = () => {
-      birdImageRef.current = img;
-      setImageLoaded(true);
+    const video = document.createElement("video");
+    video.src = ImgElement; // Ruta del video
+    video.loop = true;
+    video.muted = true;
+    video.play();
+
+    video.oncanplay = () => {
+      videoRef.current = video;
+      setVideoLoaded(true);
     };
-  
-    img.onerror = () => console.error("Failed to load bird image");
+
+    video.onerror = () => console.error("Failed to load bird video");
+  }, []);
+
+  useEffect(() => {
+    const video = document.createElement("video");
+    video.src = BgVideo;
+    video.loop = true;
+    video.muted = true;
+    video.play();
+
+    video.oncanplay = () => {
+      bgRef.current = video;
+      setBgVideo(true);
+    };
+
+    video.onerror = () => console.error("Failed to load background video");
   }, []);
 
   useEffect(() => {
@@ -37,39 +59,63 @@ const FlappyBird = () => {
 
     const gameLoop = setInterval(() => {
       if (gameOver) return;
-      
+
       setBirdY((prev) => prev + velocity);
       setVelocity((prev) => prev + GRAVITY);
-      
+
       setPipes((prev) => {
-        const newPipes = prev.map((pipe) => ({ ...pipe, x: pipe.x - PIPE_SPEED }));
+        const newPipes = prev.map((pipe) => ({
+          ...pipe,
+          x: pipe.x - PIPE_SPEED,
+        }));
         if (newPipes[0].x + PIPE_WIDTH < 0) {
           newPipes.shift();
-          newPipes.push({ x: CANVAS_WIDTH, height: Math.random() * (CANVAS_HEIGHT - PIPE_GAP - 50) + 50 });
+          newPipes.push({
+            x: CANVAS_WIDTH,
+            height: Math.random() * (CANVAS_HEIGHT - PIPE_GAP - 50) + 50,
+          });
           setScore((prev) => prev + 1);
         }
         return newPipes;
       });
 
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      
-      if (imageLoaded) {
-        ctx.drawImage(birdImageRef.current, 50, birdY, BIRD_SIZE, BIRD_SIZE);
+
+      if (bgVideo && bgRef.current) {
+        ctx.drawImage(bgRef.current, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      } else {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      }
+
+      if (videoLoaded && videoRef.current) {
+        ctx.save();
+        ctx.beginPath(); //-> Crea un nuevo camino de dibujo.
+        ctx.arc(
+          50 + BIRD_SIZE / 2,
+          birdY + BIRD_SIZE / 2,
+          BIRD_SIZE / 2,
+          0,
+          Math.PI * 2
+        ); //-> Dibuja un círculo en la posición de la gota.
+        ctx.clip(); //->  Aplica el recorte, limitando el canvas a la forma del círculo.
+        ctx.drawImage(videoRef.current, 50, birdY, BIRD_SIZE, BIRD_SIZE); //-> Dibuja el video dentro del área recortada.
+        ctx.restore(); //-> Restaura el estado del canvas para que el recorte no afecte otros elementos.
       } else {
         ctx.fillStyle = "red";
         ctx.fillRect(50, birdY, BIRD_SIZE, BIRD_SIZE);
       }
-      
-      ctx.fillStyle = "red";
+
+      ctx.fillStyle = "gray";
       pipes.forEach((pipe) => {
         ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.height);
         ctx.fillRect(pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT);
-        
+
         if (
-          (50 + BIRD_SIZE > pipe.x && 50 < pipe.x + PIPE_WIDTH &&
-            (birdY < pipe.height || birdY + BIRD_SIZE > pipe.height + PIPE_GAP)) ||
+          (50 + BIRD_SIZE > pipe.x &&
+            50 < pipe.x + PIPE_WIDTH &&
+            (birdY < pipe.height ||
+              birdY + BIRD_SIZE > pipe.height + PIPE_GAP)) ||
           birdY + BIRD_SIZE >= CANVAS_HEIGHT
         ) {
           setGameOver(true);
@@ -82,7 +128,7 @@ const FlappyBird = () => {
     }, 30);
 
     return () => clearInterval(gameLoop);
-  }, [birdY, velocity, pipes, gameOver]);
+  }, [birdY, velocity, pipes, gameOver, videoLoaded]);
 
   const handleJump = () => {
     if (!gameOver) setVelocity(JUMP);
@@ -97,7 +143,12 @@ const FlappyBird = () => {
 
   return (
     <div onClick={handleJump} style={{ textAlign: "center", marginTop: 60 }}>
-      <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} style={{ border: "1px solid black" }} />
+      <canvas
+        ref={canvasRef}
+        width={CANVAS_WIDTH}
+        height={CANVAS_HEIGHT}
+        style={{ border: "1px solid black" }}
+      />
       {gameOver && <h2>Perdiste! Hacer Click para empezar.</h2>}
     </div>
   );
