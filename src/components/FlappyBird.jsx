@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import ImgElement from "../assets/gotaElement.mp4";
 import BgVideo from "../assets/OceanoVideo.mp4";
+import bgMp3 from '../assets/bgAudio.wav';
+import jumpMp3 from '../assets/jump.wav';
+import loseMp3 from '../assets/lose.wav';
 
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 500;
@@ -23,7 +26,11 @@ const FlappyBird = () => {
   const bgRef = useRef(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [bgVideo, setBgVideo] = useState(false);
-
+  // Sound:
+  const jumpAudio = new Audio(jumpMp3);
+  const loseAudio = new Audio(loseMp3);
+  const bgAudio = new Audio(bgMp3);
+  
   useEffect(() => {
     const video = document.createElement("video");
     video.src = ImgElement; // Ruta del video
@@ -111,6 +118,7 @@ const FlappyBird = () => {
         ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.height);
         ctx.fillRect(pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT);
 
+
         if (
           (50 + BIRD_SIZE > pipe.x &&
             50 < pipe.x + PIPE_WIDTH &&
@@ -119,7 +127,8 @@ const FlappyBird = () => {
           birdY + BIRD_SIZE >= CANVAS_HEIGHT
         ) {
           setGameOver(true);
-        }
+          loseAudio.play();
+        } 
       });
 
       ctx.fillStyle = "white";
@@ -131,7 +140,10 @@ const FlappyBird = () => {
   }, [birdY, velocity, pipes, gameOver, videoLoaded]);
 
   const handleJump = () => {
-    if (!gameOver) setVelocity(JUMP);
+    if (!gameOver) {
+      jumpAudio.play();
+      setVelocity(JUMP);
+    } 
     else {
       setBirdY(CANVAS_HEIGHT / 2);
       setVelocity(0);
@@ -140,6 +152,7 @@ const FlappyBird = () => {
       setGameOver(false);
     }
   };
+
 
   return (
     <div onClick={handleJump} style={{ textAlign: "center", marginTop: 60 }}>
