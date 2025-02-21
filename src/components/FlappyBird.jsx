@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ImgElement from "../assets/gotaElement.mp4";
 import BgVideo from "../assets/OceanoVideo.mp4";
-import bgMp3 from '../assets/bgAudio.wav';
+import bgMp3 from '../assets/CastList.mp3';
 import jumpMp3 from '../assets/jump.wav';
 import loseMp3 from '../assets/lose.wav';
 
@@ -26,14 +26,15 @@ const FlappyBird = () => {
   const bgRef = useRef(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [bgVideo, setBgVideo] = useState(false);
+  const [musicBg, setMusicBg] = useState(false);
   // Sound:
   const jumpAudio = new Audio(jumpMp3);
   const loseAudio = new Audio(loseMp3);
-  const bgAudio = new Audio(bgMp3);
+  const bgAudioRef = useRef(new Audio(bgMp3));
   
   useEffect(() => {
     const video = document.createElement("video");
-    video.src = ImgElement; // Ruta del video
+    video.src = ImgElement;
     video.loop = true;
     video.muted = true;
     video.play();
@@ -62,10 +63,23 @@ const FlappyBird = () => {
   }, []);
 
   useEffect(() => {
+    const bgAudio = bgAudioRef.current;
+    bgAudio.loop = true; // Para que la música de fondo no se detenga
+  
+    if (musicBg && !gameOver) {
+      bgAudio.play();
+    } else {
+      bgAudio.pause();
+      bgAudio.currentTime = 0; // Reinicia la música
+    }
+  }, [musicBg, gameOver]);
+
+  useEffect(() => {
     const ctx = canvasRef.current.getContext("2d");
 
     const gameLoop = setInterval(() => {
       if (gameOver) return;
+      setMusicBg(true);
 
       setBirdY((prev) => prev + velocity);
       setVelocity((prev) => prev + GRAVITY);
@@ -118,7 +132,6 @@ const FlappyBird = () => {
         ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.height);
         ctx.fillRect(pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT);
 
-
         if (
           (50 + BIRD_SIZE > pipe.x &&
             50 < pipe.x + PIPE_WIDTH &&
@@ -127,6 +140,8 @@ const FlappyBird = () => {
           birdY + BIRD_SIZE >= CANVAS_HEIGHT
         ) {
           setGameOver(true);
+          setMusicBg(false);
+          bgAudioRef.current.pause();
           loseAudio.play();
         } 
       });
@@ -143,8 +158,7 @@ const FlappyBird = () => {
     if (!gameOver) {
       jumpAudio.play();
       setVelocity(JUMP);
-    } 
-    else {
+    } else {
       setBirdY(CANVAS_HEIGHT / 2);
       setVelocity(0);
       setPipes([{ x: CANVAS_WIDTH, height: 200 }]);
@@ -152,7 +166,6 @@ const FlappyBird = () => {
       setGameOver(false);
     }
   };
-
 
   return (
     <div onClick={handleJump} style={{ textAlign: "center", marginTop: 60 }}>
@@ -162,7 +175,7 @@ const FlappyBird = () => {
         height={CANVAS_HEIGHT}
         style={{ border: "1px solid black" }}
       />
-      {gameOver && <h2>Perdiste! Hacer Click para empezar.</h2>}
+      {gameOver && <h2>Su puntaje fue de: {score}. Click para comenzar </h2>}
     </div>
   );
 };
