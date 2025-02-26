@@ -10,16 +10,16 @@ const CANVAS_HEIGHT = 500;
 const BIRD_SIZE = 40;
 const GRAVITY = 0.6;
 const JUMP = -7;
-const PIPE_WIDTH = 50;
-const PIPE_GAP = 120;
-const PIPE_SPEED = 2;
+const PIPE_WIDTH = 80;
+const PIPE_GAP = 150;
+// const PIPE_SPEED = 2;
 
 const FlappyBird = () => {
   const [birdY, setBirdY] = useState(CANVAS_HEIGHT / 2);
   const [velocity, setVelocity] = useState(0);
   const [pipes, setPipes] = useState([{ x: CANVAS_WIDTH, height: 200 }]);
   const [score, setScore] = useState(0);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [pipeSpeed, setPipeSpeed] = useState(2);
   const [gameOver, setGameOver] = useState(false);
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
@@ -63,6 +63,11 @@ const FlappyBird = () => {
   }, []);
 
   useEffect(() => {
+    console.log('El score ha cambiado a:', score);
+    setPipeSpeed(pipeSpeed + 0.5);
+  }, [score]);
+
+  useEffect(() => {
     const bgAudio = bgAudioRef.current;
     bgAudio.loop = true; // Para que la música de fondo no se detenga
   
@@ -87,7 +92,7 @@ const FlappyBird = () => {
       setPipes((prev) => {
         const newPipes = prev.map((pipe) => ({
           ...pipe,
-          x: pipe.x - PIPE_SPEED,
+          x: pipe.x - pipeSpeed,
         }));
         if (newPipes[0].x + PIPE_WIDTH < 0) {
           newPipes.shift();
@@ -127,22 +132,21 @@ const FlappyBird = () => {
         ctx.fillRect(50, birdY, BIRD_SIZE, BIRD_SIZE);
       }
 
-      ctx.fillStyle = "gray";
+      ctx.fillStyle = "green";
       pipes.forEach((pipe) => {
         ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.height);
         ctx.fillRect(pipe.x, pipe.height + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT);
 
         if (
-          (50 + BIRD_SIZE > pipe.x &&
-            50 < pipe.x + PIPE_WIDTH &&
-            (birdY < pipe.height ||
-              birdY + BIRD_SIZE > pipe.height + PIPE_GAP)) ||
+          (50 + BIRD_SIZE > pipe.x && 50 < pipe.x + PIPE_WIDTH &&
+          (birdY < pipe.height || birdY + BIRD_SIZE > pipe.height + PIPE_GAP)) ||
           birdY + BIRD_SIZE >= CANVAS_HEIGHT
         ) {
           setGameOver(true);
           setMusicBg(false);
           bgAudioRef.current.pause();
           loseAudio.play();
+          setPipeSpeed(2);
         } 
       });
 
